@@ -19,8 +19,9 @@ var firebaseConfig = {
 // // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-const AnyReactComponent = ({ text, updatedAt, numPoints }) => (
+const AnyReactComponent = ({ key, text, updatedAt, numPoints }) => (
   <div
+  key={key}
     title={text}
     style={{
       position: "absolute",
@@ -31,9 +32,9 @@ const AnyReactComponent = ({ text, updatedAt, numPoints }) => (
     }}
   >
     {numPoints === 1 ? (
-      <img alt="a moving car" src={carImage} />
+      <img key={key} alt="a moving car" src={carImage} />
     ): (
-      <div style={{ fontSize: 55 }}>{numPoints}</div>
+      <div key={key} style={{ fontSize: 55 }}>{numPoints}</div>
     )}
   </div>
 );
@@ -61,24 +62,24 @@ function App({ center = door2doorOffice, zoom = 13 }) {
   const onChange = ({
     bounds, zoom, center, marginBounds, size
   }) => {
-    const v = Object.keys(initialVehicles).map(vehicle => {
+    const vehiclesLatLong = Object.keys(initialVehicles).map(vehicle => {
       const { lat, lng } = initialVehicles[vehicle];
       return {
         lat,
         lng
       };
     });
-    const tmp = supercluster(v, {
-      minZoom: 3, // min zoom to generate clusters on
-      maxZoom: 15, // max zoom level to cluster the points on
-      radius: 60 // cluster radius in pixels
+    const clusteringFunction = supercluster(vehiclesLatLong, {
+      minZoom: 5, // min zoom to generate clusters on
+      maxZoom: 13, // max zoom level to cluster the points on
+      radius: 30 // cluster radius in pixels
     });
-    const tst = tmp({
+    const clusteringInstance = clusteringFunction({
       bounds,
       center,
       zoom
     });
-    const clusteredVehicles = tst.map(({ wx, wy, numPoints, points }) => ({
+    const clusteredVehicles = clusteringInstance.map(({ wx, wy, numPoints, points }) => ({
       lat: wy,
       lng: wx,
       text: numPoints,
@@ -95,10 +96,11 @@ function App({ center = door2doorOffice, zoom = 13 }) {
         defaultZoom={zoom}
         onChange={onChange}
       >
-        {Object.keys(vehicles).map(vehicle => {
+        {Object.keys(vehicles).map((vehicle, index) => {
           const { lat, lng, at, numPoints = 1 } = vehicles[vehicle];
           return (
             <AnyReactComponent
+              key={index}
               lat={lat}
               lng={lng}
               text={vehicle}
